@@ -2,6 +2,9 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Express 2012 for Windows Desktop
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyTextbox", "MyTextbox.csproj", "{D71153C1-A93A-4C45-9DBD-244A2A383602}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4B3A6DAF-1C6E-44CA-B322-0CA407AC0BBD} = {4B3A6DAF-1C6E-44CA-B322-0CA407AC0BBD}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyLibrary", "..\MyLibrary\MyLibrary\MyLibrary.csproj", "{4B3A6DAF-1C6E-44CA-B322-0CA407AC0BBD}"
 EndProject

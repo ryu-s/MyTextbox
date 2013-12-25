@@ -116,8 +116,8 @@ namespace MyLibrary
             set
             {
                 list = String2MyLineList(value);
-                Replace work = new Replace();
-                history.Add(work);
+                Replace task = new Replace();
+                history.Add(task);
             }
             get
             {
@@ -288,8 +288,8 @@ namespace MyLibrary
                 NativeMethods.ImmGetCompositionString(hImc, NativeMethods.GCS_COMPSTR, buf, (uint)len);
                 string s = new string(buf);
                 s = s.Replace("\0", "");
-                Task work = Insert(s);
-                deleteCandidate.Add(work);
+                Task task = Insert(s);
+                deleteCandidate.Add(task);
             }
             Invalidate();
             return;
@@ -649,14 +649,14 @@ namespace MyLibrary
             MyLine line = list[nLine];
             line.Insert(pos, str);
             CurrentPos = new Position(CurrentPos.Line, CurrentPos.Pos + str.Length);
-            Task work = new Task();
-            work.type = Task.Type.INSERT;
-            work.fromLine = nLine;
-            work.fromPos = pos;
-            work.length = str.Length;
-            work.str = str;
-            history.Add(work);
-            return work;
+            Task task = new Task();
+            task.type = Task.Type.INSERT;
+            task.fromLine = nLine;
+            task.fromPos = pos;
+            task.length = str.Length;
+            task.str = str;
+            history.Add(task);
+            return task;
         }
         /// <summary>
         /// 文字列を削除
@@ -668,12 +668,12 @@ namespace MyLibrary
         {
             MyLine line = list[nLine];
             line.Delete(index, count);
-            Task work = new Task();
-            work.type = Task.Type.DELETE;
-            work.fromLine = nLine;
-            work.fromPos = index;
-            work.length = count;
-            history.Add(work);
+            Task task = new Task();
+            task.type = Task.Type.DELETE;
+            task.fromLine = nLine;
+            task.fromPos = index;
+            task.length = count;
+            history.Add(task);
 
             CurrentPos = new Position(nLine,index);
         }
