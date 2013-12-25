@@ -12,6 +12,9 @@ namespace MyLibrary
     /// 自作テキストボックス
     /// ・ハイパーリンク
     /// ・
+    /// 
+    /// TODO:スクロール
+    /// TODO:コピー＆ペースト
     /// </summary>
     public class MyTextbox : System.Windows.Forms.Control
     {
@@ -22,12 +25,14 @@ namespace MyLibrary
         #region delegate
         public delegate void MyMouseEventHandler(object sender, MyMouseEventArgs e);
         public delegate void MyTextboxInfoEventHandler(object sender, MyTextboxInfoEventArgs e);
+        public delegate void MyTaskEventHandler(object sender, TaskEventArgs e);
         #endregion
 
         #region Event
         public event MyMouseEventHandler MyMouseMove;
         public event MyMouseEventHandler MyMouseDown;
         public event MyTextboxInfoEventHandler MyTextboxInfoEvent;
+        public event MyTaskEventHandler MyTaskEvent;
         #endregion
 
         #region property
@@ -95,7 +100,7 @@ namespace MyLibrary
         /// </summary>
         List<MyLine> list;
         /// <summary>
-        /// 改行コード
+        /// デフォルトの改行コード
         /// </summary>
         MyReturnCode _returnCode;
         /// <summary>
@@ -118,6 +123,12 @@ namespace MyLibrary
                 list = String2MyLineList(value);
                 Replace task = new Replace();
                 history.Add(task);
+                if (MyTaskEvent != null)
+                {
+                    TaskEventArgs args = new TaskEventArgs();
+                    args.task = task;
+                    MyTaskEvent(this, args);
+                }
             }
             get
             {
@@ -334,7 +345,7 @@ namespace MyLibrary
                     x += c.Width;
                 }
                 x = 0F;
-                y += line.Height;
+                y += line.Height;                
             }
             
             base.OnPaint(e);
@@ -365,7 +376,7 @@ namespace MyLibrary
         /// <param name="e"></param>
         protected override void OnMouseDown(MouseEventArgs e)
         {
-            if (false && MyMouseDown != null)
+            if (MyMouseDown != null)
             {
                 MyMouseEventArgs myMouseEventArgs = new MyMouseEventArgs();
                 myMouseEventArgs.X = Position2Point(CurrentPos).X;
@@ -416,33 +427,42 @@ namespace MyLibrary
         {
             switch (e.KeyCode)
             {
+                case Keys.Up:
+                    break;
+                case Keys.Down:
+                    break;
                 case Keys.Right:
                     CurrentPos = new Position(CurrentPos.Line, CurrentPos.Pos + 1);
                     e.SuppressKeyPress = true;
-//                    Invalidate();
                     break;
                 case Keys.Left:
                     CurrentPos = new Position(CurrentPos.Line, CurrentPos.Pos - 1);
                     e.SuppressKeyPress = true;
-//                    Invalidate();
                     break;
                 case Keys.Enter:
-                    Insert("\r\n");
-                    
+                    // 現在の行（Enterキーを押した行）
+                    MyLine currentLine = list[CurrentPos.Line];
+                    // 新しく作られる行。現在の行のEnterキーを押した場所(キャレットの位置)から後ろの文字列と現在の行の改行コードを移す。
+                    MyLine newLine = new MyLine(currentLine.TextWithoutReturnValue.Substring(CurrentPos.Pos),currentLine.ReturnCode);
+                    // 現在の行のEnterキーを押した場所（キャレットの位置）から後ろの文字列を削除する。
+                    currentLine.Delete(CurrentPos.Pos, currentLine.Length - CurrentPos.Pos);
+                    // 現在の行の改行コードにはMyTextboxのデフォルトの改行コードを入れる。                    
+                    currentLine.ReturnCode = this._returnCode;
+                    // リストに新しい行を追加する。
+                    list.Insert(CurrentPos.Line + 1, newLine);
+                    // キャレットの位置を新しく作成した行の先頭に設定する。
+                    CurrentPos = new Position(CurrentPos.Line + 1, 0);
+
                     // Keyイベントをコントロールに渡さない場合はtrue。これをtrueにすると、同時にHandledもtrueとなる。
                     e.SuppressKeyPress = true;
-                    // TODO 改行する処理
-                    CurrentPos = new Position(CurrentPos.Line + 1, 0);
                     
-//                    Invalidate();
+                    // 再描画する。
+                    Invalidate();
                     break;
                 case Keys.Back:
+                    // 1文字deleteする。キャレット操作もDelete()でやる。
                     this.Delete(CurrentPos.Line, CurrentPos.Pos - 1, 1);
                     e.SuppressKeyPress = true;
-                    // キャレットを一文字分後退。関数化すべき明らかに。現状、0点で実行すると-1になるバグあり
-                    CurrentPos = new Position(CurrentPos.Line, CurrentPos.Pos -1);
-
-//                    Invalidate();
                     break;
                 case Keys.Tab:
 
@@ -649,13 +669,18 @@ namespace MyLibrary
             MyLine line = list[nLine];
             line.Insert(pos, str);
             CurrentPos = new Position(CurrentPos.Line, CurrentPos.Pos + str.Length);
-            Task task = new Task();
-            task.type = Task.Type.INSERT;
+            Task task = new Insert();
             task.fromLine = nLine;
             task.fromPos = pos;
             task.length = str.Length;
             task.str = str;
             history.Add(task);
+            if (MyTaskEvent != null)
+            {
+                TaskEventArgs args = new TaskEventArgs();
+                args.task = task;
+                MyTaskEvent(this, args);
+            }
             return task;
         }
         /// <summary>
@@ -666,16 +691,49 @@ namespace MyLibrary
         /// <param name="count">削除する長さ</param>
         public void Delete(int nLine, int index, int count)
         {
-            MyLine line = list[nLine];
-            line.Delete(index, count);
-            Task task = new Task();
-            task.type = Task.Type.DELETE;
+            if (index < 0)
+            {
+                // 行の先頭でBackspaceを押すとここに来る。
+                // (0, 0)であれば無視。
+                // それ以外であれば前の行の改行コードを消して、前の行と結合する。
+                if (nLine == 0)
+                {
+                    // 無視する。
+                    return;
+                }
+                else
+                {
+                    CurrentPos = new Position(nLine - 1, list[nLine - 1].Length);
+                    MyLine line = new MyLine(list[nLine - 1].TextWithoutReturnValue + list[nLine].TextWithoutReturnValue, list[nLine].ReturnCode);
+                    list[nLine - 1] = line;
+                    list.RemoveAt(nLine);
+
+                    Invalidate();
+                }
+            }
+            else
+            {
+                // 現状、0点で実行すると-1になるバグあり
+                MyLine line = list[nLine];
+                line.Delete(index, count);
+
+
+                CurrentPos = new Position(nLine, index);
+
+            }
+            // 履歴に登録し、タスクイベントを起こす
+            Task task = new Delete();
             task.fromLine = nLine;
             task.fromPos = index;
             task.length = count;
             history.Add(task);
-
-            CurrentPos = new Position(nLine,index);
+            if (MyTaskEvent != null)
+            {
+                TaskEventArgs args = new TaskEventArgs();
+                args.task = task;
+                MyTaskEvent(this, args);
+            }
+            Invalidate();
         }
 
     }
@@ -900,7 +958,11 @@ namespace MyLibrary
                 list.AddRange(myCharList);
             }
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="count"></param>
         public void Delete(int index, int count)
         {
             list.RemoveRange(index, count);
@@ -986,12 +1048,21 @@ namespace MyLibrary
         {
             get
             {
-                //一番大きい文字のHeightをこの行のHeightとする
                 float max = 0F;
-                for (int i = 0; i < this.Length; i++)
+                if (this.Length == 0)
                 {
-                    if (max < list[i].Height)
-                        max = list[i].Height;
+                    // もしこの行が空行（何も文字列の設定が無い）だったらデフォルトのフォントの高さを返す。
+                    max = MyTextboxDefaultValue.Font.Height;
+                }
+                else
+                {
+                    //一番大きい文字のHeightをこの行のHeightとする
+
+                    for (int i = 0; i < this.Length; i++)
+                    {
+                        if (max < list[i].Height)
+                            max = list[i].Height;
+                    }
                 }
                 return max;
             }

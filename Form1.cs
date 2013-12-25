@@ -17,7 +17,12 @@ namespace MyLibrary
             this.myTextbox1.MyMouseMove += new MyTextbox.MyMouseEventHandler(myTextbox1_MyMouseMove);
             this.myTextbox1.MyMouseDown += new MyTextbox.MyMouseEventHandler(myTextbox1_MyMouseDown);
             this.myTextbox1.MyTextboxInfoEvent += new MyTextbox.MyTextboxInfoEventHandler(myTextbox1_MyTextboxInfoEvent);
+            this.myTextbox1.MyTaskEvent += myTextbox1_MyTaskEvent;
+        }
 
+        void myTextbox1_MyTaskEvent(object sender, TaskEventArgs e)
+        {
+            myDefaultTextbox1.Text = e.task.ToString() + Environment.NewLine + myDefaultTextbox1.Text;
         }
 
         private void Form1_Load(object sender, EventArgs e)

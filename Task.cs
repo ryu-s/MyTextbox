@@ -24,6 +24,10 @@ namespace MyLibrary
         public int fromPos;
         public int length;
         public string str;
+        public string toString()
+        {
+            return type.ToString();
+        }
     }
     /// <summary>
     /// 
@@ -59,5 +63,14 @@ namespace MyLibrary
         {
             type = Type.DELETE;
         }
+    }
+
+
+
+
+
+    public class TaskEventArgs : EventArgs
+    {
+        public Task task;
     }
 }
