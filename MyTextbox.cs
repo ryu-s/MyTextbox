@@ -633,6 +633,7 @@ namespace MyLibrary
 
             vScrollBar.Scroll += vScrollBar_Scroll;
             vScrollBar.ValueChanged += vScrollBar_ValueChanged;
+            
             this.Controls.Add(vScrollBar);
             this.Controls.Add(hScrollBar);
 
@@ -658,6 +659,7 @@ namespace MyLibrary
 
         void vScrollBar_Scroll(object sender, ScrollEventArgs e)
         {
+            SetCaretPos();
             if (MyTextboxInfoEvent != null)
             {
                 MyTextboxInfoEvent(this, SetInfoEventArgs());
@@ -1560,6 +1562,7 @@ namespace MyLibrary
             {
                 MyLibrary.NativeMethods.CreateCaret(handle, IntPtr.Zero, this.width, this.height);
                 MyLibrary.NativeMethods.ShowCaret(this.handle);
+                isShow = true;
             }
         }
 
@@ -1569,6 +1572,7 @@ namespace MyLibrary
             {                
                 MyLibrary.NativeMethods.HideCaret(this.handle);
                 MyLibrary.NativeMethods.DestroyCaret();
+                isShow = false;
             }
         }
     }
