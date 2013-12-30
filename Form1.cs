@@ -27,7 +27,14 @@ namespace MyLibrary
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            this.myTextbox1.Text = "テスト\nえ\r\nこれ\rおお";
+//            this.myTextbox1.Text = "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10";
+            this.myTextbox1.Text = ""
+                +"000000000\n"
+                +"111111111\n"
+                +"222222222\n"
+                +"333333333\n"
+                +"444444444\n"
+                +"5\n6\n7\n8\n9\n10";
             this.textBox1.Text = this.myTextbox1.Text;
             this.myTextbox1.Focus();
             this.myTextbox1.Select();
@@ -41,7 +48,15 @@ namespace MyLibrary
         }
         private void myTextbox1_MyTextboxInfoEvent(object sender, MyTextboxInfoEventArgs e)
         {
-            string s = string.Format("nLine={0}\nPos={1}\nCurrentLineLength={1}", e.nLine, e.nPos,e.CurrentLineLength);
+            string s = string.Format(
+                "nPhysicalLine={0}\nPhysicalPos={1}\n"
+                +"nLogicalLine={2}\nnLogicalPos={3}\n"
+                +"CurrentLineLength={4}\nvScrollValue={5}\n"
+                +"clientsize Height={6}, Width={7}\n"
+                +"ShowFirstLine={8}\n"
+                +"ShowLastLine{9}\n",
+                e.nPhysicalLine, e.nPhysicalPos, e.nLogicalLine,e.nLogicalPos,e.CurrentLineLength, e.vScrollValue,e.clinetSize.Height,e.clinetSize.Width,
+                e.ShowFirstLine,e.ShowLastLine);
             label3.Text = s;
             Invalidate();
         }

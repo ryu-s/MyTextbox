@@ -48,16 +48,12 @@ namespace MyLibrary
         }
         /// <summary>
         /// これが位置情報の主体。キャレットはあくまで現在地の目安。
-        /// 
-        /// キャレットはPhysicalPosで管理。キャレット部分が画面外に行く可能性があるため。
         /// </summary>
-        private LogicalPosition _currentlogicalpos;
-        private PhysicalPosition _currentphysicalpos;
-/*
+        private Position _currentpos;
         /// <summary>
         /// 
         /// </summary>
-        public Position CurrentPhysicalPosition
+        public Position CurrentPos
         {
             set
             {
@@ -68,8 +64,8 @@ namespace MyLibrary
                         value.Pos = line.Length;
                     else if (value.Pos < 0)
                         value.Pos = 0;
-                    _CurrentPhysicalPosition = value;
-                    Point point = Position2Point(_CurrentPhysicalPosition);
+                    _currentpos = value;
+                    Point point = Position2Point(_currentpos);
                     caret.SetPos(point.X, point.Y);
                     if (MyTextboxInfoEvent != null)
                     {
@@ -83,86 +79,19 @@ namespace MyLibrary
             }
             get
             {
-                return _CurrentPhysicalPosition;
+                return _currentpos;
             }
         }
-*/
-        public PhysicalPosition CurrentPhysicalPosition
-        {
-            set
-            {
-                try
-                {
-                    if (value.Line > (list.Count - 1))
-                    {
-                        value.Line = (list.Count - 1);
-                    }
-                    MyLine line = list[value.Line];
-                    // もし、行の長さよりも大きいPosが指定されたら、行の最後の位置にする。
-                    if (value.Pos > line.Length) {
-                        value.Pos = line.Length;
-                    }
-                    else if (value.Pos < 0)
-                    {
-                        value.Pos = 0;
-                    }
-                    _currentphysicalpos = value;
-
-                    SetCaretPos();
-
-                    if (MyTextboxInfoEvent != null)
-                    {
-                        MyTextboxInfoEvent(this, SetInfoEventArgs());
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message,"MyTextbox.CurrentPhysicalPosition");
-                    
-                }
-            }
-            get
-            {
-                return _currentphysicalpos;
-            }
-        }
-        /// <summary>
-        /// キャレットの位置をCurrentPhysicalPositionに設定する
-        /// </summary>
-        private void SetCaretPos()
-        {
-            Point point = LogicalPosition2Point(PhysicalPosition2LogicalPosition(CurrentPhysicalPosition));
-            caret.SetPos(point.X, point.Y);
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public LogicalPosition CurrentLogicalPosition
-        {
-            set
-            {
-                CurrentPhysicalPosition = LogicalPosition2PhysicalPosition(value);
-            }
-            get
-            {
-                return PhysicalPosition2LogicalPosition(CurrentPhysicalPosition);
-            }
-        }
-
-
-
-
         /// <summary>
         /// 現在の行
         /// </summary>
-        public MyLine CurrentPhysicalLine
+        public MyLine CurrentLine
         {
             get
             {
-                return list[CurrentPhysicalPosition.Line];
+                return list[CurrentPos.Line];
             }
         }
-
         #endregion
 
         #region variable
@@ -264,8 +193,8 @@ namespace MyLibrary
         protected override void WndProc(ref Message m)
         {
             
-//            LogWriter logWriter = new LogWriter(@"C:\log\MyTextbox.txt");
-//            logWriter.Write(m.ToString());
+            LogWriter logWriter = new LogWriter(@"C:\log\MyTextbox.txt");
+            logWriter.Write(m.ToString());
 
             IntPtr hIMC;
 
@@ -326,9 +255,7 @@ namespace MyLibrary
             }
             base.WndProc(ref m);
         }
-        /// <summary>
-        /// 
-        /// </summary>
+
         List<Task> deleteCandidate = new List<Task>();
         /// <summary>
         /// 
@@ -400,26 +327,6 @@ namespace MyLibrary
 
 
         }
-
-        /// <summary>
-        /// LogicalPositionからPhysicalPositionに変換する
-        /// </summary>
-        /// <param name="logicalPosition"></param>
-        /// <returns></returns>
-        private PhysicalPosition LogicalPosition2PhysicalPosition(LogicalPosition logicalPosition)
-        {
-            return new PhysicalPosition(logicalPosition.Line + GetShowFirstLine(), logicalPosition.Pos);
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="physicalPosition"></param>
-        /// <returns></returns>
-        private LogicalPosition PhysicalPosition2LogicalPosition(PhysicalPosition physicalPosition)
-        {
-            return new LogicalPosition(physicalPosition.Line - GetShowFirstLine(), physicalPosition.Pos);
-        }
-
         /// <summary>
         /// OnPaint
         /// </summary>
@@ -429,7 +336,7 @@ namespace MyLibrary
             
             float x = 0F;
             float y = 0F;
-            for (int nLine = GetShowFirstLine(); nLine < list.Count; nLine++)
+            for (int nLine = 0; nLine < list.Count; nLine++)
             {
                 MyLine line = list[nLine];
                 for (int nPos = 0; nPos < line.Length; nPos++)
@@ -470,32 +377,25 @@ namespace MyLibrary
         /// <param name="e"></param>
         protected override void OnMouseDown(MouseEventArgs e)
         {
-            // 文字ごとにサイズが異なることを考慮しないといけない。
-            // 結構めんどうそうだ・・・まずは表示させるところからやるか・・・
-            //            CurrentPhysicalPosition = Point2Position(new Point(e.X, e.Y));
-            CurrentLogicalPosition = Point2LogicalPosition(new Point(e.X, e.Y));
-
             if (MyMouseDown != null)
             {
                 MyMouseEventArgs myMouseEventArgs = new MyMouseEventArgs();
-                myMouseEventArgs.X = LogicalPosition2Point(CurrentLogicalPosition).X;
-                myMouseEventArgs.Y = LogicalPosition2Point(CurrentLogicalPosition).Y;
-                myMouseEventArgs.nLine = CurrentLogicalPosition.Line;
-                myMouseEventArgs.nPos = CurrentLogicalPosition.Pos;
+                myMouseEventArgs.X = Position2Point(CurrentPos).X;
+                myMouseEventArgs.Y = Position2Point(CurrentPos).Y;
+                myMouseEventArgs.nLine = CurrentPos.Line;
+                myMouseEventArgs.nPos = CurrentPos.Pos;
                 MyMouseDown(this, myMouseEventArgs);
             }
-
+            // 文字ごとにサイズが異なることを考慮しないといけない。
+            // 結構めんどうそうだ・・・まずは表示させるところからやるか・・・
+            CurrentPos = Point2Position(new Point(e.X, e.Y));
 
             this.Focus();
             base.OnMouseDown(e);
 
+            
         }
 
-
-        private bool isShowLine(MyLine line)
-        {
-            return false;
-        }
         protected override void OnMouseMove(MouseEventArgs e)
         {
 
@@ -529,51 +429,30 @@ namespace MyLibrary
             switch (e.KeyCode)
             {
                 case Keys.Up:
-                    CurrentPhysicalPosition = new PhysicalPosition(CurrentPhysicalPosition.Line - 1, CurrentPhysicalPosition.Pos);
-                    e.SuppressKeyPress = true;
                     break;
                 case Keys.Down:
-                    CurrentPhysicalPosition = new PhysicalPosition(CurrentPhysicalPosition.Line + 1, CurrentPhysicalPosition.Pos);
-                    e.SuppressKeyPress = true;
                     break;
                 case Keys.Right:
-                    if (CurrentPhysicalPosition.Pos == CurrentPhysicalLine.Length)
-                    {
-                        CurrentPhysicalPosition = new PhysicalPosition(CurrentPhysicalPosition.Line + 1, 0);
-                    }
-                    else
-                    {
-                        CurrentPhysicalPosition = new PhysicalPosition(CurrentPhysicalPosition.Line, CurrentPhysicalPosition.Pos + 1);
-                    }
+                    CurrentPos = new Position(CurrentPos.Line, CurrentPos.Pos + 1);
                     e.SuppressKeyPress = true;
                     break;
                 case Keys.Left:
-                    if (CurrentPhysicalPosition.Pos == 0)
-                    {
-                        // pos == 0にいる時は、上の行の一番後ろに移動
-                        MyLine upperLine = list[CurrentPhysicalPosition.Line - 1];
-                        CurrentPhysicalPosition = new PhysicalPosition(CurrentPhysicalPosition.Line - 1, upperLine.Length);
-                    }
-                    else
-                    {
-                        // 左隣に移動
-                        CurrentPhysicalPosition = new PhysicalPosition(CurrentPhysicalPosition.Line, CurrentPhysicalPosition.Pos - 1);                        
-                    }
+                    CurrentPos = new Position(CurrentPos.Line, CurrentPos.Pos - 1);
                     e.SuppressKeyPress = true;
                     break;
                 case Keys.Enter:
                     // 現在の行（Enterキーを押した行）
-                    MyLine currentLine = list[CurrentPhysicalPosition.Line];
+                    MyLine currentLine = list[CurrentPos.Line];
                     // 新しく作られる行。現在の行のEnterキーを押した場所(キャレットの位置)から後ろの文字列と現在の行の改行コードを移す。
-                    MyLine newLine = new MyLine(currentLine.TextWithoutReturnValue.Substring(CurrentPhysicalPosition.Pos),currentLine.ReturnCode);
+                    MyLine newLine = new MyLine(currentLine.TextWithoutReturnValue.Substring(CurrentPos.Pos),currentLine.ReturnCode);
                     // 現在の行のEnterキーを押した場所（キャレットの位置）から後ろの文字列を削除する。
-                    currentLine.Delete(CurrentPhysicalPosition.Pos, currentLine.Length - CurrentPhysicalPosition.Pos);
+                    currentLine.Delete(CurrentPos.Pos, currentLine.Length - CurrentPos.Pos);
                     // 現在の行の改行コードにはMyTextboxのデフォルトの改行コードを入れる。                    
                     currentLine.ReturnCode = this._returnCode;
                     // リストに新しい行を追加する。
-                    list.Insert(CurrentPhysicalPosition.Line + 1, newLine);
+                    list.Insert(CurrentPos.Line + 1, newLine);
                     // キャレットの位置を新しく作成した行の先頭に設定する。
-                    CurrentPhysicalPosition = new PhysicalPosition(CurrentPhysicalPosition.Line + 1, 0);
+                    CurrentPos = new Position(CurrentPos.Line + 1, 0);
 
                     // Keyイベントをコントロールに渡さない場合はtrue。これをtrueにすると、同時にHandledもtrueとなる。
                     e.SuppressKeyPress = true;
@@ -583,17 +462,11 @@ namespace MyLibrary
                     break;
                 case Keys.Back:
                     // 1文字deleteする。キャレット操作もDelete()でやる。
-                    this.Delete(CurrentPhysicalPosition.Line, CurrentPhysicalPosition.Pos - 1, 1);
+                    this.Delete(CurrentPos.Line, CurrentPos.Pos - 1, 1);
                     e.SuppressKeyPress = true;
                     break;
                 case Keys.Tab:
 
-                    break;
-                case Keys.Delete:
-                    break;
-                case Keys.Home:
-                    break;
-                case Keys.End:
                     break;
             }
             //base.OnKeyDown(e);
@@ -623,6 +496,16 @@ namespace MyLibrary
         /// </summary>
         public MyTextbox()
         {
+            list = new List<MyLine>();
+            MyLine firstLine = new MyLine();
+            list.Add(firstLine);
+            this.Font = MyTextboxDefaultValue.Font;
+            this._returnCode = MyTextboxDefaultValue.ReturnCode;
+            this.AllowDrop = true;
+            this.DragDrop += new DragEventHandler(MyTextbox_DragDrop);
+            caret = new Caret(this.Handle, 2, this.Font.Height);
+            CurrentPos = new Position(0, 0);
+            history = new List<Task>();
             vScrollBar = new VScrollBar();
             hScrollBar = new HScrollBar();
 
@@ -632,37 +515,13 @@ namespace MyLibrary
             vScrollBar.Minimum = 0;
 
             vScrollBar.Scroll += vScrollBar_Scroll;
-            vScrollBar.ValueChanged += vScrollBar_ValueChanged;
             this.Controls.Add(vScrollBar);
             this.Controls.Add(hScrollBar);
-
-
-            list = new List<MyLine>();
-            MyLine firstLine = new MyLine();
-            list.Add(firstLine);
-            this.Font = MyTextboxDefaultValue.Font;
-            this._returnCode = MyTextboxDefaultValue.ReturnCode;
-            this.AllowDrop = true;
-            this.DragDrop += new DragEventHandler(MyTextbox_DragDrop);
-            caret = new Caret(this.Handle, 2, this.Font.Height);
-            CurrentPhysicalPosition = new PhysicalPosition(0, 0);
-            history = new List<Task>();
-
-
-        }
-
-        void vScrollBar_ValueChanged(object sender, EventArgs e)
-        {
-            
         }
 
         void vScrollBar_Scroll(object sender, ScrollEventArgs e)
         {
-            if (MyTextboxInfoEvent != null)
-            {
-                MyTextboxInfoEvent(this, SetInfoEventArgs());
-            }
-            Invalidate();
+            
         }
         /// <summary>
         /// デストラクタ
@@ -670,73 +529,6 @@ namespace MyLibrary
         ~MyTextbox()
         {
 
-        }
-        /// <summary>
-        /// クライアントエリアに表示すべき最初の行を取得する
-        /// </summary>
-        /// <returns></returns>
-        private int GetShowFirstLine()
-        {
-            return vScrollBar.Value;
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="point"></param>
-        /// <returns></returns>
-        private LogicalPosition Point2LogicalPosition(Point point)
-        {
-            int nLine = 0;
-            int pos = 0;
-
-            float testHeight = 0;
-            for (int i = GetShowFirstLine();; i++)
-            {
-                if (i > (list.Count-1))
-                {
-                    nLine = list.Count - 1;
-                    break;
-                }
-                testHeight += list[i].Height;
-                if (point.Y < testHeight)
-                {
-                    nLine = i;
-                    break;
-                }
-            }
-
-            MyLine line = list[nLine];
-            if (point.X < 0)
-                pos = 0;
-            else if (point.X > line.Width)
-                pos = line.Length;
-            else
-            {
-                for (int i = 0; i < line.Length; i++)
-                {
-                    float testWidth = line.GetWidth(0, i);
-                    if (point.X < (int)testWidth)
-                    {
-                        // 文字列のサイズの方が上回ったらそこがポジション
-                        // 文字の真ん中だった場合とか細かいことはまだ考慮してない。
-                        // とりあえずこんな感じだろうとテストしてみる。
-                        pos = i;
-                        MyChar c = line[i];
-                        float t = c.Width / 2.0F;
-                        float k = testWidth - t;
-                        if (point.X > (int)k)
-                        {
-                            pos += 1;
-                        }
-
-                        break;
-                    }
-                }
-            }
-
-            
-            PhysicalPosition po = new PhysicalPosition(nLine, pos);
-            return PhysicalPosition2LogicalPosition(po);
         }
         /// <summary>
         /// ピクセルから何行目何列かを取得する
@@ -798,90 +590,16 @@ namespace MyLibrary
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="logicalposition"></param>
+        /// <param name="position"></param>
         /// <returns></returns>
-        private Point LogicalPosition2Point(LogicalPosition logicalposition)
+        private Point Position2Point(Position position)
         {            
             float testHeight = 0F;
-            int nlogical = 0;
-            for (; ;)
-            {
-                if (nlogical >= logicalposition.Line)
-                    break;
-                testHeight += list[nlogical + GetShowFirstLine()].Height;
-                ++nlogical;
-            }
-            int y = (int)testHeight;
-            int x;
-            if (logicalposition.Line < 0)
-            {
-                x = -1;
-            }
-            else
-            {
-                MyLine line = list[logicalposition.Line + GetShowFirstLine()];
-                if (logicalposition.Pos == 0)
-                    x = 0;
-                else
-                    x = (int)line.GetWidth(0, logicalposition.Pos - 1);// 前の文字までの長さを取得
-            }
-            return new Point(x, y);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="position"></param>
-        /// <returns></returns>
-        private bool isShowLine(PhysicalPosition position)
-        {
-            if (position.Line < GetShowFirstLine())
-            {
-                // ClientAreaより上に行っちゃって、表示されない。
-                return false;
-            }
-            else if (position.Line > GetShowLastLine())
-            {
-                // ClientAreaより下に行っちゃって、表示されない。
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        private int GetShowLastLine()
-        {
-            float sumOfHeight = 0F;
-            int i;
-            for (i = GetShowFirstLine(); ; ++i)
-            {
-                if (i > (list.Count-1))
-                    break;
-                sumOfHeight += list[i].Height;
-                if (sumOfHeight > ClientSize.Height)
-                    break;
-            }
-            return i;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="position"></param>
-        /// <returns></returns>
-        private Point PhysicalPosition2Point(PhysicalPosition position)
-        {
-            float sumOfHeight = 0F;
             for (int i = 0; i < position.Line; i++)
             {
-                sumOfHeight += list[i].Height;
+                testHeight += list[i].Height;                
             }
-            int y = (int)sumOfHeight;
+            int y = (int)testHeight;
 
             MyLine line = list[position.Line];
             int x;
@@ -894,39 +612,13 @@ namespace MyLibrary
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        private Point ScrollValue2PhysicalPos(int value)
-        {
-            Position pos = Point2Position(new Point(0, value)); 
-            float testHeight = 0F;
-            for (int i = 0; i < pos.Line; i++)
-            {
-                testHeight += list[i].Height;
-            }
-            return new Point(0,(int)testHeight);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void MyTextbox_DragDrop(object sender, DragEventArgs e)
         {
-
+            
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        public new Size ClientSize
-        {
-            get
-            {
-                return new Size(base.ClientSize.Width - vScrollBar.Width, base.ClientSize.Height - hScrollBar.Height);
-            }
 
-        }
         private MyTextboxInfoEventArgs SetInfoEventArgs()
         {
             MyTextboxInfoEventArgs args = null;
@@ -934,15 +626,9 @@ namespace MyLibrary
             try
             {
                 args = new MyTextboxInfoEventArgs();
-                args.nPhysicalLine = CurrentPhysicalPosition.Line;
-                args.nPhysicalPos = CurrentPhysicalPosition.Pos;
-                args.nLogicalLine = CurrentLogicalPosition.Line;
-                args.nLogicalPos = CurrentLogicalPosition.Pos;
-                args.CurrentLineLength = CurrentPhysicalLine.Length;
-                args.vScrollValue = vScrollBar.Value;
-                args.clinetSize = this.ClientSize;
-                args.ShowFirstLine = GetShowFirstLine();
-                args.ShowLastLine = GetShowLastLine();
+                args.nLine = CurrentPos.Line;
+                args.nPos = CurrentPos.Pos;
+                args.CurrentLineLength = list[CurrentPos.Line].Length;
             }
             catch(Exception)
             {
@@ -964,15 +650,13 @@ namespace MyLibrary
                 this.Insert(i, 0, arr[i]);
             }
         }
-
-
         /// <summary>
         /// 現在の位置に文字列を挿入
         /// </summary>
         /// <param name="str"></param>
         public Task Insert(string str)
         {
-            return Insert(CurrentPhysicalPosition.Line, CurrentPhysicalPosition.Pos, str);
+            return Insert(CurrentPos.Line, CurrentPos.Pos, str);
         }
         /// <summary>
         /// 任意の位置に文字列を挿入
@@ -994,8 +678,7 @@ namespace MyLibrary
 
             MyLine line = list[nLine];
             line.Insert(pos, str);
-            // 任意の位置に挿入するのだから、キャレットとは違う位置に行を増やさないように挿入した時にはキャレットに影響は無い。従って、現状ではバグがある。
-            CurrentPhysicalPosition = new PhysicalPosition(CurrentPhysicalPosition.Line, CurrentPhysicalPosition.Pos + str.Length);
+            CurrentPos = new Position(CurrentPos.Line, CurrentPos.Pos + str.Length);
             Task task = new Insert();
             task.fromLine = nLine;
             task.fromPos = pos;
@@ -1031,7 +714,7 @@ namespace MyLibrary
                 }
                 else
                 {
-                    CurrentPhysicalPosition = new PhysicalPosition(nLine - 1, list[nLine - 1].Length);
+                    CurrentPos = new Position(nLine - 1, list[nLine - 1].Length);
                     MyLine line = new MyLine(list[nLine - 1].TextWithoutReturnValue + list[nLine].TextWithoutReturnValue, list[nLine].ReturnCode);
                     list[nLine - 1] = line;
                     list.RemoveAt(nLine);
@@ -1046,7 +729,7 @@ namespace MyLibrary
                 line.Delete(index, count);
 
 
-                CurrentPhysicalPosition = new PhysicalPosition(nLine, index);
+                CurrentPos = new Position(nLine, index);
 
             }
             // 履歴に登録し、タスクイベントを起こす
@@ -1093,48 +776,6 @@ namespace MyLibrary
             set;
         }
         public Position(int Line, int Pos)
-        {
-            this.Line = Line;
-            this.Pos = Pos;
-        }
-    }
-    /// <summary>
-    /// 
-    /// </summary>
-    public class LogicalPosition
-    {
-        public int Line
-        {
-            get;
-            set;
-        }
-        public int Pos
-        {
-            get;
-            set;
-        }
-        public LogicalPosition(int Line, int Pos)
-        {
-            this.Line = Line;
-            this.Pos = Pos;
-        }
-    }
-    /// <summary>
-    /// 
-    /// </summary>
-    public class PhysicalPosition
-    {
-        public int Line
-        {
-            get;
-            set;
-        }
-        public int Pos
-        {
-            get;
-            set;
-        }
-        public PhysicalPosition(int Line, int Pos)
         {
             this.Line = Line;
             this.Pos = Pos;
@@ -1303,9 +944,7 @@ namespace MyLibrary
                 return list.Count;
             }
         }
-        /// <summary>
-        /// 行の幅（pixel）
-        /// </summary>
+
         public float Width
         {
             get
@@ -1331,7 +970,7 @@ namespace MyLibrary
             }
         }
         /// <summary>
-        /// 文字列を削除
+        /// 
         /// </summary>
         /// <param name="index"></param>
         /// <param name="count"></param>
@@ -1364,7 +1003,7 @@ namespace MyLibrary
             return "MyLibrary.MyLine";
         }
         /// <summary>
-        /// 文字列（改行コードも付加）
+        /// 
         /// </summary>
         /// <returns></returns>
         public string Text
@@ -1379,7 +1018,7 @@ namespace MyLibrary
             }            
         }
         /// <summary>
-        /// 文字列（改行コードは無し）
+        /// 
         /// </summary>
         public string TextWithoutReturnValue
         {
@@ -1414,7 +1053,7 @@ namespace MyLibrary
             return width;
         }
         /// <summary>
-        /// 高さ（pixel）
+        /// 
         /// </summary>
         public float Height
         {
@@ -1533,15 +1172,7 @@ namespace MyLibrary
         {
             this.x = x;
             this.y = y;
-            if (x < 0 || y < 0)
-            {
-                HideCaret();
-            }
-            else
-            {
-                ShowCaret();
-                MyLibrary.NativeMethods.SetCaretPos(this.x, this.y);
-            }
+            MyLibrary.NativeMethods.SetCaretPos(this.x, this.y);
         }
         /// <summary>
         /// デバッグ以外ではたぶんいらない
@@ -1587,37 +1218,9 @@ namespace MyLibrary
     /// </summary>
     public class MyTextboxInfoEventArgs : EventArgs
     {
-        /// <summary>
-        /// 
-        /// </summary>
+        public int nLine;
+        public int nPos;
         public int CurrentLineLength;
-        /// <summary>
-        /// 
-        /// </summary>
-        public int vScrollValue;
-        /// <summary>
-        /// 
-        /// </summary>
-        public int nPhysicalLine;
-        /// <summary>
-        /// 
-        /// </summary>
-        public int nPhysicalPos;
-        /// <summary>
-        /// 
-        /// </summary>
-        public int nLogicalLine;
-        /// <summary>
-        /// 
-        /// </summary>
-        public int nLogicalPos;
-        /// <summary>
-        /// 
-        /// </summary>
-        public Size clinetSize;
-        public int ShowFirstLine;
-        public int ShowLastLine;
-
     }
 
 }

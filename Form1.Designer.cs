@@ -32,12 +32,14 @@
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
-            this.myTextbox1 = new MyLibrary.MyTextbox();
             this.myDefaultTextbox1 = new MyLibrary.DefaultUI.MyDefaultTextbox();
+            this.myTextbox1 = new MyLibrary.MyTextbox();
             this.SuspendLayout();
             // 
             // textBox1
             // 
+            this.textBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.textBox1.Location = new System.Drawing.Point(35, 198);
             this.textBox1.Multiline = true;
             this.textBox1.Name = "textBox1";
@@ -60,7 +62,7 @@
             // 
             this.label2.Anchor = System.Windows.Forms.AnchorStyles.Right;
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(772, 101);
+            this.label2.Location = new System.Drawing.Point(899, 31);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(35, 12);
             this.label2.TabIndex = 3;
@@ -70,11 +72,21 @@
             // 
             this.label3.Anchor = System.Windows.Forms.AnchorStyles.Right;
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(772, 164);
+            this.label3.Location = new System.Drawing.Point(772, 112);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(35, 12);
             this.label3.TabIndex = 4;
             this.label3.Text = "label3";
+            // 
+            // myDefaultTextbox1
+            // 
+            this.myDefaultTextbox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.myDefaultTextbox1.Location = new System.Drawing.Point(499, 224);
+            this.myDefaultTextbox1.Multiline = true;
+            this.myDefaultTextbox1.Name = "myDefaultTextbox1";
+            this.myDefaultTextbox1.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.myDefaultTextbox1.Size = new System.Drawing.Size(540, 298);
+            this.myDefaultTextbox1.TabIndex = 5;
             // 
             // myTextbox1
             // 
@@ -83,20 +95,11 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.myTextbox1.BackColor = System.Drawing.Color.White;
-            this.myTextbox1.Font = new System.Drawing.Font("メイリオ", 10F);
+            this.myTextbox1.Font = new System.Drawing.Font("Meiryo", 10F);
             this.myTextbox1.Location = new System.Drawing.Point(35, 31);
             this.myTextbox1.Name = "myTextbox1";
             this.myTextbox1.Size = new System.Drawing.Size(710, 145);
             this.myTextbox1.TabIndex = 0;
-            // 
-            // myDefaultTextbox1
-            // 
-            this.myDefaultTextbox1.Location = new System.Drawing.Point(499, 224);
-            this.myDefaultTextbox1.Multiline = true;
-            this.myDefaultTextbox1.Name = "myDefaultTextbox1";
-            this.myDefaultTextbox1.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.myDefaultTextbox1.Size = new System.Drawing.Size(540, 298);
-            this.myDefaultTextbox1.TabIndex = 5;
             // 
             // Form1
             // 
